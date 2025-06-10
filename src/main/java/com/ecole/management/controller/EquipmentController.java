@@ -42,6 +42,14 @@ public class EquipmentController {
                                  @RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "25") int size) {
         try {
+            // Clean up empty string parameters to null
+            if (etablissement != null && etablissement.trim().isEmpty()) {
+                etablissement = null;
+            }
+            if (status != null && status.trim().isEmpty()) {
+                status = null;
+            }
+
             // Ensure page is not negative
             page = Math.max(0, page);
             size = Math.max(1, Math.min(100, size)); // Limit size between 1 and 100
@@ -114,8 +122,16 @@ public class EquipmentController {
             model.addAttribute("currentPage", page);
             model.addAttribute("pageSize", size);
 
+            // Debug information for pagination
+            System.out.println("DEBUG - Pagination: page=" + page + ", size=" + size +
+                    ", totalPages=" + equipmentPage.getTotalPages() +
+                    ", totalElements=" + equipmentPage.getTotalElements() +
+                    ", hasContent=" + equipmentPage.hasContent() +
+                    ", categoryId=" + categoryId + ", etablissement='" + etablissement + "', status='" + status + "'");
+
             return "equipements/list";
         } catch (Exception e) {
+            e.printStackTrace(); // Debug print
             model.addAttribute("errorMessage", "Erreur lors du chargement des équipements: " + e.getMessage());
             model.addAttribute("categories", categoryService.getAllCategories());
             // Provide empty page for error case

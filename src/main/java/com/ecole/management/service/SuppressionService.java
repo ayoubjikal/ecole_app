@@ -81,22 +81,40 @@ public class SuppressionService {
         return suppressionRepository.save(suppression);
     }
 
-    /**
-     * CORRECTION CRITIQUE: Ordre des opérations modifié pour éviter l'erreur Hibernate
-     * "ObjectDeletedException: deleted instance passed to merge"
-     */
     @Transactional
     public void deleteSuppression(Integer id) {
+        // Find the suppression first
         Suppression suppression = suppressionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Suppression non trouvée"));
 
-        // Reactivate the equipment
+        // Get equipment details
         Equipment equipment = suppression.getEquipment();
-        equipment.setStatus(EquipmentStatus.ACTIVE);
-        equipmentService.updateEquipment(equipment);
+        Integer equipmentId = equipment.getCode();
 
-        // Actually delete the suppression record from database
-        suppressionRepository.delete(suppression);
+        // Manual deletion approach
+        try {
+            // Remove the relationship first
+            equipment.setSuppression(null);
+            equipmentService.updateEquipment(equipment);
+
+            // Force flush
+            suppressionRepository.flush();
+
+            // Delete suppression
+            suppressionRepository.delete(suppression);
+            suppressionRepository.flush();
+
+            // Reactivate equipment
+            equipment.setStatus(EquipmentStatus.ACTIVE);
+            equipmentService.updateEquipment(equipment);
+
+            System.out.println("DEBUG - Suppression manually deleted: ID=" + id);
+
+        } catch (Exception e) {
+            System.err.println("ERROR deleting suppression: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Erreur lors de la suppression: " + e.getMessage());
+        }
     }
 
     @Transactional(readOnly = true)

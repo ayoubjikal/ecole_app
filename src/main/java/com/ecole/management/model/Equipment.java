@@ -85,7 +85,7 @@ public class Equipment {
     @Column(nullable = false)
     private EquipmentStatus status = EquipmentStatus.ACTIVE;
 
-    @OneToOne(mappedBy = "equipment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "equipment", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private Suppression suppression;
 
     // Add helper methods
